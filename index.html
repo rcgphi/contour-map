@@ -1,0 +1,287 @@
+export default function PracticalWisdomWidget() {
+  const { useMemo, useState } = React;
+
+  const [wisdom, setWisdom] = useState(35);
+  const [showLabels, setShowLabels] = useState(true);
+  const [viewMode, setViewMode] = useState("contour");
+
+  const width = 760;
+  const height = 420;
+  const cols = 24;
+  const rows = 14;
+  const threshold = 0.52;
+
+  const gaussian = (x, y, cx, cy, amp, sx, sy = sx) => {
+    const dx = x - cx;
+    const dy = y - cy;
+    return amp * Math.exp(-((dx * dx) / (2 * sx * sx) + (dy * dy) / (2 * sy * sy)));
+  };
+
+  const terrain = useMemo(() => {
+    const ruleCompression = 1 - wisdom / 100;
+    const detail = wisdom / 100;
+    const pts = [];
+
+    for (let r = 0; r < rows; r++) {
+      const row = [];
+      for (let c = 0; c < cols; c++) {
+        const x = c / (cols - 1);
+        const y = r / (rows - 1);
+
+        // Rich moral / practical terrain: multiple local peaks and valleys.
+        let z = 0.16;
+        z += gaussian(x, y, 0.18, 0.28, 0.48, 0.12, 0.14); // decent fit
+        z += gaussian(x, y, 0.48, 0.70, 0.30, 0.16, 0.12); // compromise peak
+        z += gaussian(x, y, 0.78, 0.26, 0.66, 0.11, 0.12); // best fitting response
+        z += gaussian(x, y, 0.70, 0.78, 0.22, 0.13, 0.12); // another acceptable region
+        z -= gaussian(x, y, 0.40, 0.42, 0.26, 0.14, 0.12); // hidden pitfall
+        z -= gaussian(x, y, 0.85, 0.58, 0.20, 0.10, 0.10); // local hazard
+
+        // Add subtle context texture that becomes visible with wisdom.
+        z += detail * 0.06 * Math.sin(10 * x + 2 * y);
+        z += detail * 0.05 * Math.cos(11 * y - 3 * x);
+
+        // Compress toward a binary rule-like map when wisdom is low.
+        const binary = z >= threshold ? 0.9 : 0.08;
+        z = binary * ruleCompression + z * (1 - ruleCompression);
+        z = Math.max(0, Math.min(1, z));
+
+        row.push({ x, y, z });
+      }
+      pts.push(row);
+    }
+    return pts;
+  }, [wisdom]);
+
+  const getColor = (z) => {
+    if (wisdom < 18) {
+      return z >= threshold ? "#ef4444" : "#111827";
+    }
+
+    if (viewMode === "binary") {
+      return z >= threshold ? "#dc2626" : "#111827";
+    }
+
+    if (z < 0.15) return "#111827";
+    if (z < 0.28) return "#1f2937";
+    if (z < 0.42) return "#374151";
+    if (z < 0.56) return "#6b7280";
+    if (z < 0.7) return "#9ca3af";
+    if (z < 0.82) return "#d1d5db";
+    return "#f59e0b";
+  };
+
+  const cellW = width / cols;
+  const cellH = height / rows;
+
+  const labels = [
+    { x: 0.80, y: 0.20, text: "High peak: best fitting response" },
+    { x: 0.16, y: 0.24, text: "Low peak: merely acceptable" },
+    { x: 0.44, y: 0.42, text: "Hidden pitfall" },
+    { x: 0.58, y: 0.72, text: "Context-sensitive tradeoff" },
+  ];
+
+  const ruleText = wisdom < 35
+    ? "Rules draw a hard boundary: permitted vs. forbidden."
+    : wisdom < 75
+    ? "Some contours appear, but important differences are still flattened."
+    : "Practical wisdom reveals gradients, local optima, and context-sensitive differences.";
+
+  return (
+    <div className="min-h-screen w-full bg-neutral-950 text-neutral-100 p-6 md:p-10">
+      <div className="max-w-6xl mx-auto space-y-6">
+        <div className="space-y-2">
+          <div className="text-sm uppercase tracking-[0.22em] text-neutral-400">Interactive Teaching Widget</div>
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Rules can draw the line. Wisdom reads the landscape.</h1>
+          <p className="text-neutral-300 max-w-4xl leading-relaxed">
+            Move the slider from a coarse, rule-like view toward a richer view of practical wisdom.
+            The same social terrain appears very different depending on how much nuance the model can perceive.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-[320px_1fr] gap-6 items-start">
+          <div className="rounded-3xl border border-neutral-800 bg-neutral-900/70 p-5 shadow-2xl space-y-5">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-neutral-200">Rule Compression ↔ Practical Wisdom</label>
+                <span className="text-sm text-amber-300 font-medium">{wisdom}% wisdom</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={wisdom}
+                onChange={(e) => setWisdom(Number(e.target.value))}
+                className="w-full accent-amber-400"
+              />
+              <div className="mt-2 flex justify-between text-xs text-neutral-400">
+                <span>Binary rulebook</span>
+                <span>Nuanced judgment</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="text-sm font-medium text-neutral-200">View</div>
+              <div className="flex gap-2 flex-wrap">
+                {[
+                  { key: "contour", label: "Contour map" },
+                  { key: "tiles", label: "Heat tiles" },
+                  { key: "binary", label: "Boundary only" },
+                ].map((mode) => (
+                  <button
+                    key={mode.key}
+                    onClick={() => setViewMode(mode.key)}
+                    className={`px-3 py-2 rounded-2xl text-sm border transition ${viewMode === mode.key
+                      ? "bg-amber-400 text-neutral-950 border-amber-300"
+                      : "bg-neutral-900 text-neutral-200 border-neutral-700 hover:border-neutral-500"
+                    }`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <label className="flex items-center gap-3 text-sm text-neutral-300">
+              <input
+                type="checkbox"
+                checked={showLabels}
+                onChange={(e) => setShowLabels(e.target.checked)}
+                className="accent-amber-400"
+              />
+              Show teaching labels
+            </label>
+
+            <div className="rounded-2xl bg-neutral-950/80 border border-neutral-800 p-4 space-y-3">
+              <div className="text-sm font-semibold text-neutral-100">What this illustrates</div>
+              <p className="text-sm text-neutral-300 leading-relaxed">{ruleText}</p>
+              <ul className="text-sm text-neutral-400 space-y-2 list-disc pl-5">
+                <li>Rules help mark boundaries and prevent obvious failures.</li>
+                <li>But they can flatten the terrain into crude categories.</li>
+                <li>Practical wisdom perceives gradients, tradeoffs, and better or worse fits.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-neutral-800 bg-neutral-900/50 p-4 md:p-5 shadow-2xl overflow-hidden">
+            <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-100">Moral / Practical Terrain</h2>
+                <p className="text-sm text-neutral-400">The terrain stays the same; only the representation changes.</p>
+              </div>
+              <div className="text-xs text-neutral-500">Illustrative analogy, not a literal moral theory</div>
+            </div>
+
+            <div className="relative w-full overflow-auto rounded-2xl bg-neutral-950 border border-neutral-800 p-3">
+              <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+                <defs>
+                  <filter id="softGlow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                    <feMerge>
+                      <feMergeNode in="coloredBlur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                {terrain.map((row, r) =>
+                  row.map((pt, c) => {
+                    const x = c * cellW;
+                    const y = r * cellH;
+                    const color = getColor(pt.z);
+                    const inset = viewMode === "tiles" ? 2 : 0;
+                    const rx = viewMode === "tiles" ? 8 : 0;
+                    return (
+                      <rect
+                        key={`${r}-${c}`}
+                        x={x + inset / 2}
+                        y={y + inset / 2}
+                        width={cellW - inset}
+                        height={cellH - inset}
+                        rx={rx}
+                        fill={color}
+                        opacity={viewMode === "contour" ? 0.95 : 1}
+                        stroke={viewMode === "contour" ? "rgba(255,255,255,0.04)" : "transparent"}
+                      />
+                    );
+                  })
+                )}
+
+                {viewMode === "contour" && (
+                  <>
+                    {[0.2, 0.35, 0.5, 0.65, 0.8].map((level, i) => {
+                      const dots = [];
+                      terrain.forEach((row, r) => {
+                        row.forEach((pt, c) => {
+                          if (Math.abs(pt.z - level) < 0.03) {
+                            dots.push(
+                              <circle
+                                key={`${i}-${r}-${c}`}
+                                cx={c * cellW + cellW / 2}
+                                cy={r * cellH + cellH / 2}
+                                r={wisdom > 50 ? 2.4 : 1.7}
+                                fill={level > 0.65 ? "#fde68a" : "#e5e7eb"}
+                                opacity={0.75}
+                              />
+                            );
+                          }
+                        });
+                      });
+                      return dots;
+                    })}
+                  </>
+                )}
+
+                {viewMode !== "binary" && wisdom > 55 && (
+                  <>
+                    <path d="M120 98 L598 88" stroke="rgba(255,255,255,0.22)" strokeDasharray="7 7" />
+                    <path d="M286 174 L348 258" stroke="rgba(255,255,255,0.22)" strokeDasharray="7 7" />
+                  </>
+                )}
+
+                {showLabels && labels.map((label, i) => (
+                  <g key={i} filter="url(#softGlow)">
+                    <circle cx={label.x * width} cy={label.y * height} r="5" fill="#fbbf24" />
+                    <rect
+                      x={Math.min(label.x * width + 10, width - 215)}
+                      y={Math.max(label.y * height - 16, 10)}
+                      width="205"
+                      height="30"
+                      rx="10"
+                      fill="rgba(10,10,10,0.84)"
+                      stroke="rgba(251,191,36,0.35)"
+                    />
+                    <text
+                      x={Math.min(label.x * width + 20, width - 205)}
+                      y={Math.max(label.y * height + 4, 30)}
+                      fill="#f5f5f5"
+                      fontSize="13"
+                      fontFamily="Arial, sans-serif"
+                    >
+                      {label.text}
+                    </text>
+                  </g>
+                ))}
+              </svg>
+            </div>
+
+            <div className="mt-4 grid md:grid-cols-3 gap-3 text-sm">
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-3">
+                <div className="font-medium text-neutral-100 mb-1">Low slider</div>
+                <div className="text-neutral-400">A coarse system sees mainly rule compliance and rule violation.</div>
+              </div>
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-3">
+                <div className="font-medium text-neutral-100 mb-1">Middle slider</div>
+                <div className="text-neutral-400">Some nuance appears, but multiple good-enough responses still blur together.</div>
+              </div>
+              <div className="rounded-2xl border border-neutral-800 bg-neutral-950/60 p-3">
+                <div className="font-medium text-neutral-100 mb-1">High slider</div>
+                <div className="text-neutral-400">Practical wisdom discerns better, worse, fitting, unfitting, and context-sensitive tradeoffs.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
