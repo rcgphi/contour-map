@@ -2,147 +2,611 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Practical Wisdom Widget</title>
+  <title>Practical Wisdom Terrain Widget</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- React + Babel (no build step needed) -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #0a0a0a;
       color: #f5f5f5;
     }
-    .container {
-      max-width: 1100px;
-      margin: auto;
-      padding: 20px;
+    .page {
+      min-height: 100vh;
+      width: 100%;
+      padding: 24px;
+      background: #0a0a0a;
+    }
+    .wrap {
+      max-width: 1380px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: #a3a3a3;
+      margin-bottom: 10px;
     }
     h1 {
-      font-size: 28px;
-      margin-bottom: 5px;
+      margin: 0 0 8px 0;
+      font-size: 38px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
-    p {
-      color: #ccc;
+    .subhead {
+      color: #d4d4d4;
+      max-width: 980px;
+      line-height: 1.6;
+      margin-bottom: 24px;
     }
-    .controls {
-      margin: 20px 0;
-    }
-    input[type=range] {
-      width: 100%;
+    .layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 24px;
+      align-items: start;
     }
     .panel {
-      background: #111;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 20px;
+      background: rgba(23, 23, 23, 0.75);
+      border: 1px solid #262626;
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+    }
+    .controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+    .label-row label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e5e5e5;
+    }
+    .wisdom-badge {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fcd34d;
+      white-space: nowrap;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: #fbbf24;
+    }
+    .range-caption {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #9ca3af;
+      margin-top: 8px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e5e5e5;
+      margin-bottom: 8px;
+    }
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    button.mode-btn {
+      padding: 10px 14px;
+      border-radius: 16px;
+      border: 1px solid #404040;
+      background: #171717;
+      color: #e5e5e5;
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.2s ease;
+    }
+    button.mode-btn:hover {
+      border-color: #737373;
+    }
+    button.mode-btn.active {
+      background: #fbbf24;
+      color: #111827;
+      border-color: #fcd34d;
+      font-weight: 600;
+    }
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #d4d4d4;
+      font-size: 14px;
+    }
+    .info-box {
+      background: rgba(10,10,10,0.78);
+      border: 1px solid #262626;
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .info-box .title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #f5f5f5;
+      margin-bottom: 8px;
+    }
+    .info-box p {
+      font-size: 14px;
+      color: #d4d4d4;
+      line-height: 1.6;
+      margin: 0 0 10px 0;
+    }
+    .info-box ul {
+      margin: 0;
+      padding-left: 20px;
+      color: #a3a3a3;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .viz-panel {
+      padding: 18px;
+    }
+    .viz-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .viz-head h2 {
+      margin: 0;
+      font-size: 20px;
+      color: #f5f5f5;
+    }
+    .viz-head p {
+      margin: 4px 0 0 0;
+      color: #9ca3af;
+      font-size: 14px;
+    }
+    .tiny-note {
+      font-size: 12px;
+      color: #737373;
+    }
+    .svg-shell {
+      overflow: auto;
+      border-radius: 18px;
+      background: #0a0a0a;
+      border: 1px solid #262626;
+      padding: 12px;
     }
     svg {
       width: 100%;
       height: auto;
-      background: #000;
-      border-radius: 10px;
+      display: block;
+      min-width: 760px;
+    }
+    .bottom-cards {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .mini-card {
+      background: rgba(10,10,10,0.6);
+      border: 1px solid #262626;
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .mini-card .title {
+      color: #f5f5f5;
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    .mini-card .body {
+      color: #a3a3a3;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .bottom-cards {
+        grid-template-columns: 1fr;
+      }
+      h1 {
+        font-size: 32px;
+      }
+      .page {
+        padding: 16px;
+      }
     }
   </style>
 </head>
-
 <body>
-<div id="root"></div>
+  <div id="root"></div>
 
-<script type="text/babel">
+  <script type="text/babel">
+    function PracticalWisdomWidget() {
+      const { useMemo, useState } = React;
 
-function App() {
-  const [wisdom, setWisdom] = React.useState(30);
+      const [wisdom, setWisdom] = useState(38);
+      const [showLabels, setShowLabels] = useState(true);
+      const [showPaths, setShowPaths] = useState(true);
+      const [surfaceMode, setSurfaceMode] = useState("surface3d");
 
-  const width = 700;
-  const height = 400;
-  const cols = 24;
-  const rows = 14;
+      const width = 820;
+      const height = 470;
+      const cols = 28;
+      const rows = 18;
+      const threshold = 0.5;
 
-  function gaussian(x, y, cx, cy, amp, s) {
-    return amp * Math.exp(-((x - cx)**2 + (y - cy)**2) / (2 * s * s));
-  }
+      const gaussian = (x, y, cx, cy, amp, sx, sy = sx) => {
+        const dx = x - cx;
+        const dy = y - cy;
+        return amp * Math.exp(-((dx * dx) / (2 * sx * sx) + (dy * dy) / (2 * sy * sy)));
+      };
 
-  const terrain = [];
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      let x = c / cols;
-      let y = r / rows;
+      const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
-      let z = 0.2;
-      z += gaussian(x,y,0.2,0.3,0.5,0.15);
-      z += gaussian(x,y,0.75,0.25,0.7,0.12);
-      z += gaussian(x,y,0.5,0.75,0.3,0.18);
-      z -= gaussian(x,y,0.45,0.45,0.3,0.15);
+      const terrain = useMemo(() => {
+        const ruleCompression = 1 - wisdom / 100;
+        const detail = wisdom / 100;
+        const pts = [];
 
-      // compression
-      let ruleCompression = 1 - wisdom / 100;
-      let binary = z > 0.5 ? 0.9 : 0.1;
-      z = binary * ruleCompression + z * (1 - ruleCompression);
+        for (let r = 0; r < rows; r++) {
+          const row = [];
+          for (let c = 0; c < cols; c++) {
+            const x = c / (cols - 1);
+            const y = r / (rows - 1);
 
-      terrain.push({
-        x: c * (width/cols),
-        y: r * (height/rows),
-        z: Math.max(0, Math.min(1, z))
-      });
+            let z = 0.12;
+            z += gaussian(x, y, 0.22, 0.42, 0.48, 0.11, 0.14); // local peak
+            z += gaussian(x, y, 0.78, 0.26, 0.86, 0.12, 0.12); // global peak
+            z += gaussian(x, y, 0.56, 0.74, 0.22, 0.16, 0.14); // secondary region
+            z -= gaussian(x, y, 0.44, 0.44, 0.34, 0.12, 0.12); // valley
+            z -= gaussian(x, y, 0.70, 0.56, 0.22, 0.11, 0.10); // second hazard valley
+            z += detail * 0.05 * Math.sin(9 * x + 2 * y);
+            z += detail * 0.04 * Math.cos(10 * y - 2 * x);
+            z = clamp(z, 0, 1);
+
+            const binary = z >= threshold ? 0.84 : 0.08;
+            const compressed = binary * ruleCompression + z * (1 - ruleCompression);
+
+            row.push({ x, y, z: compressed, originalZ: z });
+          }
+          pts.push(row);
+        }
+        return pts;
+      }, [wisdom]);
+
+      const project = (x, y, z) => {
+        const px = x * width * 0.86 + 70;
+        const py = y * height * 0.82 + 42 - z * 110;
+        return { px, py };
+      };
+
+      const getColor = (z) => {
+        if (surfaceMode === "binary") {
+          return z >= threshold ? "#dc2626" : "#111827";
+        }
+        if (z < 0.1) return "#0f172a";
+        if (z < 0.22) return "#1f2937";
+        if (z < 0.35) return "#334155";
+        if (z < 0.48) return "#64748b";
+        if (z < 0.62) return "#94a3b8";
+        if (z < 0.76) return "#cbd5e1";
+        if (z < 0.88) return "#fcd34d";
+        return "#f59e0b";
+      };
+
+      const quads = useMemo(() => {
+        const arr = [];
+        for (let r = 0; r < rows - 1; r++) {
+          for (let c = 0; c < cols - 1; c++) {
+            const a = terrain[r][c];
+            const b = terrain[r][c + 1];
+            const d = terrain[r + 1][c];
+            const e = terrain[r + 1][c + 1];
+            const pa = project(a.x, a.y, a.z);
+            const pb = project(b.x, b.y, b.z);
+            const pd = project(d.x, d.y, d.z);
+            const pe = project(e.x, e.y, e.z);
+            const avgZ = (a.z + b.z + d.z + e.z) / 4;
+            const avgY = (pa.py + pb.py + pd.py + pe.py) / 4;
+            arr.push({ pa, pb, pd, pe, avgZ, avgY });
+          }
+        }
+        return arr.sort((m, n) => m.avgY - n.avgY);
+      }, [terrain]);
+
+      const sampleAt = (tx, ty) => {
+        const c = clamp(Math.round(tx * (cols - 1)), 0, cols - 1);
+        const r = clamp(Math.round(ty * (rows - 1)), 0, rows - 1);
+        return terrain[r][c];
+      };
+
+      const makePath = (points) => {
+        return points
+          .map((p, i) => {
+            const s = sampleAt(p.x, p.y);
+            const pr = project(p.x, p.y, s.z);
+            return `${i === 0 ? "M" : "L"} ${pr.px} ${pr.py}`;
+          })
+          .join(" ");
+      };
+
+      const rulePathPoints = [
+        { x: 0.08, y: 0.78 },
+        { x: 0.14, y: 0.64 },
+        { x: 0.18, y: 0.52 },
+        { x: 0.22, y: 0.44 },
+        { x: 0.26, y: 0.40 },
+      ];
+
+      const wisdomPathPoints = [
+        { x: 0.08, y: 0.78 },
+        { x: 0.16, y: 0.68 },
+        { x: 0.28, y: 0.56 },
+        { x: 0.42, y: 0.50 },
+        { x: 0.54, y: 0.42 },
+        { x: 0.68, y: 0.34 },
+        { x: 0.78, y: 0.26 },
+      ];
+
+      const labels = [
+        { x: 0.22, y: 0.42, text: "Local peak: merely acceptable" },
+        { x: 0.78, y: 0.26, text: "Global peak: best fitting response" },
+        { x: 0.44, y: 0.44, text: "Valley: ambiguity / difficulty" },
+        { x: 0.68, y: 0.34, text: "Wisdom can navigate through tradeoffs" },
+      ];
+
+      const ruleText = wisdom < 30
+        ? "Rule compression bins the terrain into acceptable vs. unacceptable. It finds a nearby local peak and stops."
+        : wisdom < 72
+        ? "Some structure appears, but the search is still drawn toward what is merely acceptable and easily legible."
+        : "Practical wisdom reveals the fuller landscape, including the valleys one must traverse to reach the best-fitting response.";
+
+      return (
+        <div className="page">
+          <div className="wrap">
+            <div className="eyebrow">Interactive Teaching Widget</div>
+            <h1>Rules can draw the line. Practical wisdom can cross the valley.</h1>
+            <div className="subhead">
+              Move the slider from coarse rule compression toward richer practical wisdom. The surface stays the same,
+              but a compressed model tends to stop at what is merely acceptable, while a wiser model can perceive how to
+              navigate toward the best-fitting response.
+            </div>
+
+            <div className="layout">
+              <div className="panel controls-panel">
+                <div>
+                  <div className="label-row">
+                    <label>Rule Compression ↔ Practical Wisdom</label>
+                    <div className="wisdom-badge">{wisdom}% wisdom</div>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={wisdom}
+                    onChange={(e) => setWisdom(Number(e.target.value))}
+                  />
+                  <div className="range-caption">
+                    <span>Boundary only</span>
+                    <span>Rich terrain</span>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="section-title">Surface mode</div>
+                  <div className="button-group">
+                    {[
+                      { key: "surface3d", label: "3D surface" },
+                      { key: "contour", label: "Contour" },
+                      { key: "binary", label: "Binary" },
+                    ].map((mode) => (
+                      <button
+                        key={mode.key}
+                        className={`mode-btn ${surfaceMode === mode.key ? "active" : ""}`}
+                        onClick={() => setSurfaceMode(mode.key)}
+                      >
+                        {mode.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <label className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={showLabels}
+                    onChange={(e) => setShowLabels(e.target.checked)}
+                  />
+                  Show teaching labels
+                </label>
+
+                <label className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={showPaths}
+                    onChange={(e) => setShowPaths(e.target.checked)}
+                  />
+                  Show search paths
+                </label>
+
+                <div className="info-box">
+                  <div className="title">What this illustrates</div>
+                  <p>{ruleText}</p>
+                  <ul>
+                    <li>Rules help prevent obvious failures and mark constraints.</li>
+                    <li>But compressed representations can stop at local optima.</li>
+                    <li>Practical wisdom perceives tradeoffs, gradients, and paths through difficulty.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="panel viz-panel">
+                <div className="viz-head">
+                  <div>
+                    <h2>Practical Terrain</h2>
+                    <p>Same situation-space, different degrees of legibility.</p>
+                  </div>
+                  <div className="tiny-note">Analogy: not a literal moral theory</div>
+                </div>
+
+                <div className="svg-shell">
+                  <svg viewBox={`0 0 ${width + 120} ${height + 70}`}>
+                    <defs>
+                      <filter id="softGlow">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                        <feMerge>
+                          <feMergeNode in="coloredBlur" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+
+                    {surfaceMode === "surface3d" && quads.map((q, i) => (
+                      <polygon
+                        key={i}
+                        points={`${q.pa.px},${q.pa.py} ${q.pb.px},${q.pb.py} ${q.pe.px},${q.pe.py} ${q.pd.px},${q.pd.py}`}
+                        fill={getColor(q.avgZ)}
+                        stroke="rgba(255,255,255,0.05)"
+                        strokeWidth="1"
+                      />
+                    ))}
+
+                    {surfaceMode !== "surface3d" && terrain.map((row, r) =>
+                      row.map((pt, c) => {
+                        const cellW = width / cols;
+                        const cellH = height / rows;
+                        return (
+                          <rect
+                            key={`${r}-${c}`}
+                            x={c * cellW + 20}
+                            y={r * cellH + 20}
+                            width={cellW}
+                            height={cellH}
+                            fill={getColor(pt.z)}
+                            stroke={surfaceMode === "contour" ? "rgba(255,255,255,0.05)" : "transparent"}
+                          />
+                        );
+                      })
+                    )}
+
+                    {surfaceMode === "contour" && [0.2, 0.35, 0.5, 0.68, 0.82].map((level, i) => (
+                      <g key={i}>
+                        {terrain.flatMap((row, r) => row.map((pt, c) => {
+                          if (Math.abs(pt.z - level) < 0.025) {
+                            const cellW = width / cols;
+                            const cellH = height / rows;
+                            return (
+                              <circle
+                                key={`${i}-${r}-${c}`}
+                                cx={c * cellW + cellW / 2 + 20}
+                                cy={r * cellH + cellH / 2 + 20}
+                                r="2"
+                                fill={level > 0.68 ? "#fde68a" : "#e5e7eb"}
+                                opacity="0.7"
+                              />
+                            );
+                          }
+                          return null;
+                        }))}
+                      </g>
+                    ))}
+
+                    {showPaths && (
+                      <>
+                        {surfaceMode === "surface3d" ? (
+                          <>
+                            <path d={makePath(rulePathPoints)} stroke="#f87171" strokeWidth="4" fill="none" strokeDasharray="8 6" filter="url(#softGlow)" />
+                            <path d={makePath(wisdomPathPoints)} stroke="#fbbf24" strokeWidth="4" fill="none" filter="url(#softGlow)" />
+                          </>
+                        ) : (
+                          <>
+                            <path d="M 85 385 L 145 310 L 190 250 L 225 210 L 260 190" stroke="#f87171" strokeWidth="4" fill="none" strokeDasharray="8 6" />
+                            <path d="M 85 385 L 150 330 L 235 285 L 335 255 L 430 215 L 545 165 L 660 118" stroke="#fbbf24" strokeWidth="4" fill="none" />
+                          </>
+                        )}
+                      </>
+                    )}
+
+                    {showLabels && labels.map((label, i) => {
+                      const s = sampleAt(label.x, label.y);
+                      const p = surfaceMode === "surface3d"
+                        ? project(label.x, label.y, s.z)
+                        : { px: label.x * width + 20, py: label.y * height + 20 };
+                      return (
+                        <g key={i} filter="url(#softGlow)">
+                          <circle cx={p.px} cy={p.py} r="5" fill="#fbbf24" />
+                          <rect
+                            x={Math.min(p.px + 12, width + 120 - 240)}
+                            y={Math.max(p.py - 16, 8)}
+                            width="220"
+                            height="30"
+                            rx="10"
+                            fill="rgba(10,10,10,0.84)"
+                            stroke="rgba(251,191,36,0.35)"
+                          />
+                          <text
+                            x={Math.min(p.px + 22, width + 120 - 228)}
+                            y={Math.max(p.py + 4, 24)}
+                            fill="#f5f5f5"
+                            fontSize="13"
+                            fontFamily="Arial, sans-serif"
+                          >
+                            {label.text}
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {showPaths && (
+                      <g>
+                        <rect x="26" y="18" width="230" height="54" rx="12" fill="rgba(10,10,10,0.78)" stroke="rgba(255,255,255,0.08)" />
+                        <line x1="42" y1="38" x2="88" y2="38" stroke="#f87171" strokeWidth="4" strokeDasharray="8 6" />
+                        <text x="98" y="42" fill="#e5e7eb" fontSize="13" fontFamily="Arial, sans-serif">Rule-based search: local optimum</text>
+                        <line x1="42" y1="58" x2="88" y2="58" stroke="#fbbf24" strokeWidth="4" />
+                        <text x="98" y="62" fill="#e5e7eb" fontSize="13" fontFamily="Arial, sans-serif">Practical wisdom: global best fit</text>
+                      </g>
+                    )}
+                  </svg>
+                </div>
+
+                <div className="bottom-cards">
+                  <div className="mini-card">
+                    <div className="title">Low slider</div>
+                    <div className="body">A rulebook sees mainly acceptable vs. unacceptable and settles for the nearby safe peak.</div>
+                  </div>
+                  <div className="mini-card">
+                    <div className="title">Middle slider</div>
+                    <div className="body">Some nuance appears, but the valley still looks like noise or danger rather than part of the path.</div>
+                  </div>
+                  <div className="mini-card">
+                    <div className="title">High slider</div>
+                    <div className="body">Practical wisdom can recognize when passing through difficulty leads to the best-fitting end.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
     }
-  }
 
-  function color(z) {
-    if (wisdom < 20) {
-      return z > 0.5 ? "#ef4444" : "#111";
-    }
-    if (z < 0.2) return "#111";
-    if (z < 0.4) return "#333";
-    if (z < 0.6) return "#666";
-    if (z < 0.8) return "#aaa";
-    return "#f59e0b";
-  }
-
-  return (
-    <div className="container">
-      <h1>Rules can draw the line. Wisdom reads the landscape.</h1>
-      <p>Move the slider to see how coarse rules flatten reality, while practical wisdom reveals nuance.</p>
-
-      <div className="panel controls">
-        <label>Rule Compression ↔ Practical Wisdom ({wisdom}%)</label>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={wisdom}
-          onChange={(e) => setWisdom(Number(e.target.value))}
-        />
-      </div>
-
-      <svg viewBox={`0 0 ${width} ${height}`}>
-        {terrain.map((pt, i) => (
-          <rect
-            key={i}
-            x={pt.x}
-            y={pt.y}
-            width={width/cols}
-            height={height/rows}
-            fill={color(pt.z)}
-          />
-        ))}
-      </svg>
-
-      <div className="panel">
-        {wisdom < 30 && <p><b>Low wisdom:</b> A rulebook reduces everything to permitted vs forbidden.</p>}
-        {wisdom >= 30 && wisdom < 70 && <p><b>Mid range:</b> Some nuance appears, but many differences are flattened.</p>}
-        {wisdom >= 70 && <p><b>High wisdom:</b> Practical wisdom reveals gradients, tradeoffs, and better vs best responses.</p>}
-      </div>
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-
-</script>
+    ReactDOM.createRoot(document.getElementById("root")).render(<PracticalWisdomWidget />);
+  </script>
 </body>
 </html>
